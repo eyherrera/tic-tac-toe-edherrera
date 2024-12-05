@@ -1,162 +1,85 @@
-var estado = false;
-var intentos = 0;
-var backcolor="magenta";
-var line="20px";
-function turno(boton) {
-    boton.disabled = true;
-    boton.value = !estado ? "X" : "O";
-    document.getElementById("mensaje").innerHTML = estado ? "Turno X" : "Turno O";
-    estado = !estado;
-    verificar();
+const board = document.querySelector('.board');
+const cells = document.querySelectorAll('.cell');
+const resetButton = document.getElementById('reset');
+const winnerMessage = document.getElementById('winner-message');
+
+let currentPlayer = 'X';
+let gameActive = true;
+let boardState = Array(9).fill(null);
+
+const winningCombinations = [
+  [0, 1, 2], // Top row
+  [3, 4, 5], // Middle row
+  [6, 7, 8], // Bottom row
+  [0, 3, 6], // Left column
+  [1, 4, 7], // Middle column
+  [2, 5, 8], // Right column
+  [0, 4, 8], // Diagonal 1
+  [2, 4, 6]  // Diagonal 2
+];
+
+// Add the win line element
+const winLine = document.createElement('div');
+winLine.classList.add('win-line');
+board.appendChild(winLine);
+
+function checkWinner() {
+  for (const combination of winningCombinations) {
+    const [a, b, c] = combination;
+    if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+      drawWinLine(combination);
+      winnerMessage.textContent = `${currentPlayer} Gana!`;
+      gameActive = false;
+      return true;
+    }
+  }
+  if (!boardState.includes(null)) {
+    winnerMessage.textContent = `Es un empate!`;
+    gameActive = false;
+    return true;
+  }
+  return false;
 }
 
-function desactivar() {
-    document.querySelectorAll("input[type='button']").forEach(boton => { boton.disabled = true; });
+function drawWinLine([a, b, c]) {
+  const cellA = cells[a].getBoundingClientRect();
+  const cellC = cells[c].getBoundingClientRect();
+
+  const boardRect = board.getBoundingClientRect();
+  const x1 = cellA.left + cellA.width / 2 - boardRect.left;
+  const y1 = cellA.top + cellA.height / 2 - boardRect.top;
+  const x2 = cellC.left + cellC.width / 2 - boardRect.left;
+  const y2 = cellC.top + cellC.height / 2 - boardRect.top;
+
+  const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+  const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+
+  winLine.style.width = `${length}px`;
+  winLine.style.transform = `translate(${x1}px, ${y1}px) rotate(${angle}deg)`;
 }
 
-function verificar() {
-    if (++intentos == 9) {
-        document.getElementById("mensaje").innerHTML = "Empate";
-    }
-    var botones = document.querySelectorAll("input[type='button']");
-    const estilo = document.createElement("style");
+function handleCellClick(event) {
+  const cell = event.target;
+  const index = cell.dataset.index;
 
+  if (!gameActive || boardState[index]) return;
 
-    if (botones[0].value == botones[1].value && botones[1].value == botones[2].value && botones[0].value != "") {
-        desactivar()
-        estilo.textContent = `tr:nth-child(1)::after{
-            content: "";
-            position: absolute;
-            top: 50%;
-            transform:translateY(-50%);
-            left: 0;
-            right: 0;
-            height: ${line};
-            background-color: ${backcolor};
-            z-index: 1;
-            pointer-events: none;
-        }`;
+  boardState[index] = currentPlayer;
+  cell.textContent = currentPlayer;
 
-        document.getElementById("mensaje").innerHTML = `Gana ${botones[0].value}`;
-        desactivar();
-    }
-    else if (botones[3].value == botones[4].value && botones[4].value == botones[5].value && botones[3].value != "") {
-        estilo.textContent = `tr:nth-child(2)::after{
-            content: "";
-            position: absolute;
-            top: 50%;
-            transform:translateY(-50%);
-            left: 0;
-            right: 0;
-            height: ${line};
-            background-color: ${backcolor};
-            z-index: 1;
-            pointer-events: none;
-        }`;
-        document.getElementById("mensaje").innerHTML = `Gana ${botones[3].value}`;
-        desactivar();
-    }
-    else if (botones[6].value == botones[7].value && botones[7].value == botones[8].value && botones[6].value != "") {
-        estilo.textContent = `tr:nth-child(3)::after{
-            content: "";
-            position: absolute;
-            top: 50%;
-            transform:translateY(-50%);
-            left: 0;
-            right: 0;
-            height: ${line};
-            background-color: ${backcolor};
-            z-index: 1;
-            pointer-events: none;
-        }`;
-        document.getElementById("mensaje").innerHTML = `Gana ${botones[6].value}`;
-        desactivar();
-    }
-    else if (botones[0].value == botones[3].value && botones[3].value == botones[6].value && botones[0].value != "") {
-        estilo.textContent = `td:nth-child(1)::after{
-            content: "";
-            position: absolute;
-            top: -1px;
-            bottom: -1px;
-            left:50%;
-            transform:translateX(-50%);
-            width: ${line};
-            background-color: ${backcolor};
-            z-index: 1;
-            pointer-events: none;
-        }`;
-        document.getElementById("mensaje").innerHTML = `Gana ${botones[0].value}`;
-        desactivar();
-    }
-    else if (botones[1].value == botones[4].value && botones[4].value == botones[7].value && botones[1].value != "") {
-        estilo.textContent = `td:nth-child(2)::after{
-            content: "";
-            position: absolute;
-            top: -1px;
-            bottom: -1px;
-            left:50%;
-            transform:translateX(-50%);
-            width: ${line};
-            background-color: ${backcolor};
-            z-index: 1;
-            pointer-events: none;
-        }`;
-        document.getElementById("mensaje").innerHTML = `Gana ${botones[1].value}`;
-        desactivar();
-    }
-    else if (botones[2].value == botones[5].value && botones[5].value == botones[8].value && botones[2].value != "") {
-        estilo.textContent = `td:nth-child(3)::after{
-            content: "";
-            position: absolute;
-            top: -1px;
-            bottom: -1px;
-            left:50%;
-            transform:translateX(-50%);
-            width: ${line};
-            background-color: ${backcolor};
-            z-index: 1;
-            pointer-events: none;
-        }`;
-        document.getElementById("mensaje").innerHTML = `Gana ${botones[2].value}`;
-        desactivar();
-    }
-    else if (botones[0].value == botones[4].value && botones[4].value == botones[8].value && botones[0].value != "") {
-        estilo.textContent = `table::after{
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: calc(100%*1.414);
-            height: calc(100%*1.414);
-            border-top: ${line} solid ${backcolor};
-            transform: rotate(45deg);
-            transform-origin: top left;
-            z-index: 1;
-            pointer-events: none;
-        }`;
-        document.getElementById("mensaje").innerHTML = `Gana ${botones[0].value}`;
-        desactivar();
-    }
-    else if (botones[2].value == botones[4].value && botones[4].value == botones[6].value && botones[2].value != "") {
-        estilo.textContent = `table::after{
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: calc(100%*1.414);
-            height: calc(100%*1.414);
-            border-top: ${line} solid ${backcolor};
-            transform: rotate(-45deg);
-            transform-origin: top right;
-            z-index: 1;
-            pointer-events: none;
-        }`;
-        document.getElementById("mensaje").innerHTML = `Gana ${botones[2].value}`;
-        desactivar();
-    }
-    document.head.appendChild(estilo);
+  if (!checkWinner()) {
+    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+  }
 }
 
-function reiniciar(){
-    window.location.reload();
+function resetGame() {
+  boardState.fill(null);
+  cells.forEach(cell => (cell.textContent = ''));
+  winnerMessage.textContent = '';
+  currentPlayer = 'X';
+  gameActive = true;
+  winLine.style.width = '0';
 }
+
+cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+resetButton.addEventListener('click', resetGame);
