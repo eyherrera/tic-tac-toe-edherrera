@@ -1,0 +1,8 @@
+input[type=button]{
+    width: 200px;
+    height: 200px;
+    font-size: 100px;
+}
+table,tr,td{
+    position: relative;
+}
